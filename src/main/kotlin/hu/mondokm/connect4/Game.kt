@@ -1,4 +1,4 @@
-package com.example
+package hu.mondokm.connect4
 
 import javafx.animation.AnimationTimer
 import javafx.application.Application
@@ -9,6 +9,7 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
+import javafx.scene.layout.GridPane
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 
@@ -21,14 +22,11 @@ class Game : Application() {
 
     private lateinit var mainScene: Scene
     private lateinit var graphicsContext: GraphicsContext
+    private lateinit var grid: GridPane
 
-    private lateinit var space: Image
-    private lateinit var sun: Image
-
-    private var sunX = WIDTH / 2
-    private var sunY = HEIGHT / 2
-
-    private var lastFrameTime: Long = System.nanoTime()
+    private lateinit var columns: Array<MutableList<CellStatus>>
+    private var currentColumn: Int = 3
+    private lateinit var currentPlayer: CellStatus
 
     // use a set so duplicates are not possible
     private val currentlyActiveKeys = mutableSetOf<KeyCode>()
@@ -40,19 +38,17 @@ class Game : Application() {
         mainScene = Scene(root)
         mainStage.scene = mainScene
 
-        val canvas = Canvas(WIDTH.toDouble(), HEIGHT.toDouble())
-        root.children.add(canvas)
+        columns = Array(6) {i -> mutableListOf()}
+
+        grid = GridPane()
+
+        root.children.add(grid)
 
         prepareActionHandlers()
 
-        graphicsContext = canvas.graphicsContext2D
-
-        loadGraphics()
-
-        // Main loop
         object : AnimationTimer() {
             override fun handle(currentNanoTime: Long) {
-                tickAndRender(currentNanoTime)
+                render()
             }
         }.start()
 
@@ -68,18 +64,8 @@ class Game : Application() {
         }
     }
 
-    private fun loadGraphics() {
-        // prefixed with / to indicate that the files are
-        // in the root of the "resources" folder
-        space = Image(getResource("/space.png"))
-        sun = Image(getResource("/sun.png"))
-    }
+    private fun render() {
 
-    private fun tickAndRender(currentNanoTime: Long) {
-        // the time elapsed since the last frame, in nanoseconds
-        // can be used for physics calculation, etc
-        val elapsedNanos = currentNanoTime - lastFrameTime
-        lastFrameTime = currentNanoTime
 
         // clear canvas
         graphicsContext.clearRect(0.0, 0.0, WIDTH.toDouble(), HEIGHT.toDouble())

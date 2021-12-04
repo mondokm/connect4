@@ -1,4 +1,4 @@
-package com.example
+package hu.mondokm.connect4
 
 import javafx.application.Application
 

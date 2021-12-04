@@ -24,4 +24,4 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-mainClassName = 'com.example.MainKt'
+mainClassName = 'hu.mondokm.connect4.MainKt'
