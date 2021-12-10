@@ -1,38 +1,35 @@
 package hu.mondokm.connect4
 
-import javafx.animation.AnimationTimer
 import javafx.application.Application
+import javafx.application.Platform
 import javafx.event.EventHandler
 import javafx.scene.Group
 import javafx.scene.Scene
-import javafx.scene.canvas.Canvas
-import javafx.scene.canvas.GraphicsContext
-import javafx.scene.image.Image
+import javafx.scene.control.Alert
+import javafx.scene.control.Alert.AlertType
+import javafx.scene.control.ButtonType
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
-import javafx.scene.paint.Color
 import javafx.stage.Stage
+import java.util.*
+
 
 class Game : Application() {
 
-    companion object {
-        private const val WIDTH = 512
-        private const val HEIGHT = 512
-    }
-
     private lateinit var mainStage: Stage
     private lateinit var mainScene: Scene
-    private lateinit var graphicsContext: GraphicsContext
     private lateinit var grid: GridPane
     private lateinit var selectorLine: HBox
 
-    private lateinit var columns: Array<MutableList<CellStatus>>
-    private var currentColumn: Int = 3
+    private lateinit var columns: GameMap
+    private var currentColumn: Int = GameConstants.DEFAULT_COLUMN
     private lateinit var currentPlayer: CellStatus
 
     override fun start(mainStage: Stage) {
+        check(GameConstants.COLUMNS >= GameConstants.ROWS) { "Number of columns must be greater than the number of rows" }
+
         this.mainStage = mainStage
         mainStage.isResizable = false
 
@@ -44,7 +41,7 @@ class Game : Application() {
 
         val vbox = VBox()
 
-        columns = Array(7) { i -> mutableListOf() }
+        columns = createGameMap()
         currentPlayer = CellStatus.YELLOW
 
         grid = GridPane()
@@ -70,13 +67,16 @@ class Game : Application() {
 
     private fun render() {
         selectorLine.children.clear()
-        for (i in 0..6) {
-            selectorLine.children.add(Cell(if(currentColumn == i) currentPlayer else CellStatus.BACKGROUND))
+        for (i in 0 until GameConstants.COLUMNS) {
+            selectorLine.children.add(Cell(if (currentColumn == i) currentPlayer else CellStatus.BACKGROUND))
         }
 
         grid.children.clear()
         columns.forEachIndexed { index, mutableList ->
-            val cells = List(6) { i -> mutableList.getOrElse(5 - i) { CellStatus.EMPTY } }.map { Cell(it) }
+            val cells =
+                List(GameConstants.ROWS) { i -> mutableList.getOrElse(GameConstants.ROWS - 1 - i) { CellStatus.EMPTY } }.map {
+                    Cell(it)
+                }
             grid.addColumn(index, *cells.toTypedArray())
         }
 
@@ -88,16 +88,31 @@ class Game : Application() {
             currentColumn = if (currentColumn > 0) currentColumn - 1 else currentColumn
         }
         if (code == KeyCode.RIGHT) {
-            currentColumn = if (currentColumn < 6) currentColumn + 1 else currentColumn
+            currentColumn = if (currentColumn < GameConstants.COLUMNS - 1) currentColumn + 1 else currentColumn
         }
         if (code == KeyCode.DOWN) {
-            check(currentColumn in 0..6)
+            check(currentColumn in 0 until GameConstants.COLUMNS)
             val column = columns.get(currentColumn)
-            if (column.size >= 6) return
+            if (column.size >= GameConstants.ROWS) return
             column.add(currentPlayer)
+            if(checkWinCondition(columns, currentPlayer) != WinStatus.NEITHER_WON){
+                val alert = Alert(
+                    AlertType.INFORMATION,
+                    "The ${currentPlayer.toString().lowercase(Locale.getDefault()).capitalize()} player won the game",
+                    ButtonType.OK,
+                )
+                alert.headerText = null
+                alert.showAndWait()
+                    .filter{it == ButtonType.OK}
+                    .ifPresent{
+                        Platform.exit()
+                        System.exit(0)
+                    }
+            }
             currentPlayer = if (currentPlayer == CellStatus.RED) CellStatus.YELLOW else CellStatus.RED
-            currentColumn = 3
+            currentColumn = GameConstants.DEFAULT_COLUMN
         }
     }
+
 
 }
