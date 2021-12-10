@@ -4,4 +4,5 @@ enum class CellStatus {
     EMPTY,
     RED,
     YELLOW,
+    BACKGROUND,
 }

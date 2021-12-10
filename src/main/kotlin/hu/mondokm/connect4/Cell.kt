@@ -12,6 +12,7 @@ class Cell(
             CellStatus.EMPTY -> Color.WHITE
             CellStatus.RED -> Color.RED
             CellStatus.YELLOW -> Color.YELLOW
+            CellStatus.BACKGROUND -> Color.TRANSPARENT
         })
 
     init {
